@@ -1,10 +1,9 @@
 from sqlalchemy import create_engine, Column, Table
 from sqlalchemy import Integer, String, Float, Date, ForeignKey
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.orm import declarative_base, relationship
 
 db_engine = create_engine('sqlite:///fisher_friend_database.db')
 Base = declarative_base()
-
 
 table_zuvis_vietove = Table(
     'zuvis_vietove',
@@ -12,6 +11,7 @@ table_zuvis_vietove = Table(
     Column('zuvis_id', Integer, ForeignKey('zuvis.id')),
     Column('vietove_id', Integer, ForeignKey('vietove.id'))
 )
+
 
 class Zuvis(Base):
     __tablename__= 'zuvis'
@@ -21,8 +21,7 @@ class Zuvis(Base):
     kada_pagauta = Column("Pagavimo data", Date)
     rusis_id = Column(Integer, ForeignKey('rusis.id'))
     rusis = relationship('Rusis')
-    vietove_id = Column(Integer, ForeignKey('vietove.id'))
-    vietove = relationship('Vietove')
+    vietoves = relationship('Vietove', secondary=table_zuvis_vietove, back_populates='zuvys')
 
     def __repr__(self):
         return f"{self.id}, {self.svoris}, {self.ilgis}, {self.kada_pagauta}"
@@ -42,6 +41,7 @@ class Vietove(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     pavadinimas = Column("Pavadinimas", String(50))
     tipas = Column("Tipas", String(50))
+    zuvys = relationship("Zuvis", secondary=table_zuvis_vietove, back_populates='vietoves')
 
     def __repr__(self):
         return f"{self.id}, {self.pavadinimas}, {self.tipas}"
