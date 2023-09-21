@@ -5,13 +5,6 @@ from sqlalchemy.orm import declarative_base, relationship
 db_engine = create_engine('sqlite:///fisher_friend_database.db')
 Base = declarative_base()
 
-table_zuvis_vietove = Table(
-    'zuvis_vietove',
-    Base.metadata,
-    Column('zuvis_id', Integer, ForeignKey('zuvis.id')),
-    Column('vietove_id', Integer, ForeignKey('vietove.id'))
-)
-
 
 class Zuvis(Base):
     __tablename__= 'zuvis'
@@ -21,7 +14,8 @@ class Zuvis(Base):
     kada_pagauta = Column("Pagavimo data", Date)
     rusis_id = Column(Integer, ForeignKey('rusis.id'))
     rusis = relationship('Rusis')
-    vietoves = relationship('Vietove', secondary=table_zuvis_vietove, back_populates='zuvys')
+    vietove_id = Column(Integer, ForeignKey('vietove.id'))
+    vietove = relationship('Vietove', back_populates='zuvys')
 
     def __repr__(self):
         return f"{self.id}, {self.svoris}, {self.ilgis}, {self.kada_pagauta}"
@@ -33,7 +27,7 @@ class Rusis(Base):
     pavadinimas = Column("Pavadinimas", String(50))
 
     def __repr__(self):
-        return f"{self.id}, {self.pavadinimas}"
+        return f"{self.pavadinimas}"
     
 
 class Vietove(Base):
@@ -41,10 +35,10 @@ class Vietove(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     pavadinimas = Column("Pavadinimas", String(50))
     tipas = Column("Tipas", String(50))
-    zuvys = relationship("Zuvis", secondary=table_zuvis_vietove, back_populates='vietoves')
+    zuvys = relationship("Zuvis", back_populates='vietove')
 
     def __repr__(self):
-        return f"{self.id}, {self.pavadinimas}, {self.tipas}"
+        return f"{self.pavadinimas}, {self.tipas}"
     
 
 Base.metadata.create_all(db_engine)
