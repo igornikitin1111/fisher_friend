@@ -25,22 +25,28 @@ def prideti_zuvi(values):
 #
 #
 
-# PySimpleGUI
 layout = [
     [sg.TabGroup([
-    [sg.Tab('Prideti zuvi', [
-    [sg.Text("Svoris:"), sg.InputText(key='-SVORIS-')],
-    [sg.Text("Ilgis:"), sg.InputText(key='-ILGIS-')],
-    [sg.Text("Pagavimo data:"), sg.InputText(key='-KADA_PAGAUTA-')],
-    [sg.Text("Rusis:"), sg.InputText(key='-RUSIS-')],
-    [sg.Text("Vietove:"), sg.InputText(key='-VIETOVE-')],
-    [sg.Button("Prideti")]]),],
-    [sg.Tab('Istrinti zuvi', [
-    [sg.Text("Pasirinkite zuvi:"), sg.Listbox(values=[], size=(30, 10), key='-ZUVYS-')],
-    [sg.Button("Istrinti")]])],
-    [sg.Tab('Perziureti zuvis', [
-    [sg.Listbox(values=[], size=(30, 10), key='-ZUVYS-')]])]])]
+        [sg.Tab('Prideti', [
+            [sg.Text("Svoris:"), sg.InputText(key='-SVORIS-')],
+            [sg.Text("Ilgis:"), sg.InputText(key='-ILGIS-')],
+            [sg.Text("Pagavimo data:"), sg.InputText(key='-KADA_PAGAUTA-')],
+            [sg.Text("Rusis:"), sg.Combo(values=[], enable_events=True, key='-RUSIS-'), sg.Button("Prideti rusi")],
+            [sg.Text("Vietove:"), sg.Combo(values=[], enable_events=True, key='-VIETOVE-'), sg.Button("Prideti vietove")],
+            [sg.Button("Prideti")]
+        ])],
+        [sg.Tab('Perziurėti zuvis', [
+            [sg.Table(values=[], headings=['ID', 'SVORIS', 'ILGIS', 'RUSIS', 'VIETOVE', 'PAGAVIMO DATA'], 
+                      col_widths=[4, 14, 14, 14, 14, 14], justification='center', auto_size_columns=False,
+                        key='-TABLE-', select_mode='extended', enable_events=True)],
+            [sg.Button("Istrinti")]
+        ])]
+    ])]
 ]
 
 window = sg.Window("Fisher Friend Programa", layout)
+while True:
+    event, values = window.read()
+    if event == sg.WIN_CLOSED or event == 'Atšaukti':
+        break
 window.close()
