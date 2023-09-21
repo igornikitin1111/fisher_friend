@@ -34,8 +34,8 @@ def prideti_rusi():
             sg.popup(f"Rūšis '{rusis_pavadinimas} sėkmingai pridėta...")
             ikelti_rusis()
 
-def istrinti_rusi():
-    layout = [[sg.Listbox(values=ikelti_rusis(), key='-ISTRINTI-RUSI-')],
+def istrinti_rusi_layout():
+    layout = [[sg.Listbox(values=ikelti_rusis(), key='-ISTRINTI-RUSI-', size=(8, 5))],
               [sg.Button('Ištrinti'), sg.Button('Išeiti')],
     ]
     window_istrinti = sg.Window('', layout)
@@ -44,13 +44,54 @@ def istrinti_rusi():
         if event == sg.WIN_CLOSED or event == 'Išeiti':
             break
         if event == 'Ištrinti':
-            pass
+            pasirinkta_rusis = values['-ISTRINTI-RUSI-']
+            if pasirinkta_rusis:
+                istrinti_rusi(pasirinkta_rusis[0])
     window_istrinti.close()
+
+def istrinti_rusi(pasirinkta_rusis):
+    rusis_istrinimui = session.query(Rusis).filter_by(pavadinimas=pasirinkta_rusis).first()
+    if rusis_istrinimui:
+        session.delete(rusis_istrinimui)
+        session.commit()
+
 
 def ikelti_rusis():
     rusys = session.query(Rusis).all()
     data_rusis = [(rusis.pavadinimas) for rusis in rusys]
     return data_rusis
+
+def ikelti_tipus():
+    tipai = session.query(Vietove).all()
+    data_tipas = [(vietove.tipas) for vietove in tipai]
+    return data_tipas
+def prideti_vietove_layout():
+    layout = [
+        [sg.Text("Pavadinimas: "), sg.InputText(key='-VIETOVE-')],
+        [sg.Text("Telkinys: "), sg.Combo(values=['ežeras', 'tvenkinys', 'upė', 'jūra'], key='-TIPAS-')],
+        [sg.Button("Pridėti"), sg.Button("Išeiti")]
+    ]
+    window_vietove = sg.Window('', layout)
+    while True:
+        event, values = window_vietove.read()
+        if event == sg.WIN_CLOSED or event == "Išeiti":
+            break
+        if event == "Pridėti":
+            prideti_vietove(values)
+            window_vietove.close()
+
+def prideti_vietove(values):
+    pavadinimas = values['-VIETOVE-']
+    tipas = values['-TIPAS-']
+    nauja_vietove = Vietove(pavadinimas=pavadinimas, tipas=tipas)
+    session.add(nauja_vietove)
+    session.commit()
+    sg.popup(f"Vietovė '{nauja_vietove.pavadinimas}, {nauja_vietove.tipas}' sėkmingai pridėta...'")
+
+def ikelti_vietoves():
+    vietoves = session.query(Vietove).all()
+    data_vietoves = [(vietove.pavadinimas, vietove.tipas) for vietove in vietoves]
+    return data_vietoves
 
 def istrinti_vietove():
     layout = [[sg.Listbox(values=[], key='-ISTRINTI-VIETOVE-')],
@@ -66,18 +107,15 @@ def istrinti_vietove():
     window_istrinti.close()
 
 
-#
-#
-
 layout = [
     [sg.TabGroup([
         [sg.Tab('Prideti', [
             [sg.Text("Svoris:"), sg.InputText(key='-SVORIS-')],
             [sg.Text("Ilgis:"), sg.InputText(key='-ILGIS-')],
             [sg.Text("Pagavimo data:"), sg.InputText(key='-KADA_PAGAUTA-')],
-            [sg.Text("Rusis:"), sg.Combo(values=[], enable_events=True, key='-RUSIS-'), sg.Button("Pridėti rūšį"), sg.Button("Ištrinti rūšį")],
-            [sg.Text("Vietove:"), sg.Combo(values=[], enable_events=True, key='-VIETOVE-'), sg.Button("Prideti vietove"), sg.Button("Ištrinti vietovę")],
-            [sg.Button("Prideti"), sg.Button('Update')]
+            [sg.Text("Rusis:"), sg.Combo(values=ikelti_rusis(), enable_events=True, key='-RUSIS-', size=(8, 10)), sg.Button("Pridėti rūšį"), sg.Button("Ištrinti rūšį")],
+            [sg.Text("Vietove:"), sg.Combo(values=ikelti_vietoves(), enable_events=True, key='-VIETOVE-'), sg.Button("Pridėti vietovę"), sg.Button("Ištrinti vietovę")],
+            [sg.Button("Prideti")]
         ])],
         [sg.Tab('Perziurėti zuvis', [
             [sg.Table(values=[], headings=['ID', 'SVORIS', 'ILGIS', 'RUSIS', 'VIETOVE', 'PAGAVIMO DATA'], 
@@ -92,14 +130,17 @@ window = sg.Window("Fisher Friend Programa", layout, finalize=True)
 while True:
     event, values = window.read()
     ikelti_rusis()
+    ikelti_vietoves()
     if event == sg.WIN_CLOSED or event == 'Atšaukti':
         break
     if event == "Pridėti rūšį":
         prideti_rusi()
+        window['-RUSIS-'].update(values=ikelti_rusis())
     if event == "Ištrinti rūšį":
-        istrinti_rusi()
+        istrinti_rusi_layout()
     if event == "Ištrinti vietovę":
         istrinti_vietove()
-    if event == 'UPDATE':
-        ikelti_rusis()
+    if event == "Pridėti vietovę":
+        prideti_vietove_layout()
+        window['-VIETOVE-'].update(values=ikelti_vietoves())
 window.close()
