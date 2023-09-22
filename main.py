@@ -9,77 +9,107 @@ db_engine = create_engine('sqlite:///fisher_friend_database.db')
 Session = sessionmaker(db_engine)
 session = Session()
 
+sg.theme('DarkTeal12')
+
 ##############################################################################
 def atnaujinti_duomenis_layout(selected_data, window):
     zuvis = selected_data[0]
     layout = [
-        [sg.Text("Svoris: "), sg.InputText(key='-SVORIS-', default_text=str(zuvis.svoris))],
-        [sg.Text("Ilgis: "), sg.InputText(key='-ILGIS-', default_text=str(zuvis.ilgis))],
-        [sg.Text("Pagavimo data: "), sg.InputText(key='-PAGAVIMO-DATA-', default_text=zuvis.kada_pagauta)],
-        [sg.Text("Rūšis: "), sg.Combo(values=ikelti_rusis(), enable_events=True, key='-RUSIS-', size=(8, 10), readonly=True, default_value=zuvis.rusis)],
-        [sg.Text("Vietovė: "), sg.Combo(values=ikelti_vietoves(), enable_events=True, key='-VIETOVE-', size=(15, 10), readonly=True, default_value=zuvis.vietove)],
-        [sg.Button("Atnaujinti", key="-ATNAUJINTI-"), sg.Button("Išeiti", key='-ISEITI-ATNAUJINTI-')]
+        [sg.Text("Svoris:", justification='left', size=12), sg.InputText(key='-SVORIS-', default_text=str(zuvis.svoris), size=10)],
+        [sg.Text("Ilgis:", justification='left', size=12), sg.InputText(key='-ILGIS-', default_text=str(zuvis.ilgis), size=10)],
+        [sg.Text("Pagavimo data:", justification='left', size=12), sg.InputText(key='-PAGAVIMO-DATA-', default_text=zuvis.kada_pagauta, size=10)],
+        [sg.Text("Rūšis:", justification='left', size=7), sg.Combo(values=ikelti_rusis(), enable_events=True, key='-RUSIS-', size=(14, 10), readonly=True, default_value=zuvis.rusis)],
+        [sg.Text("Vietovė:", justification='left', size=7), sg.Combo(values=ikelti_vietoves(), enable_events=True, key='-VIETOVE-', size=(14, 10), readonly=True, default_value=zuvis.vietove)],
+        [sg.Button("Atnaujinti", key="-ATNAUJINTI-"), sg.Text('', size=8), sg.Button("Išeiti", key='-ISEITI-ATNAUJINTI-')]
     ]
     window_atnaujinti = sg.Window('', layout, finalize=True)
+    window_atnaujinti.set_icon(r"icon.ico")
     while True:
         event, values = window_atnaujinti.read()
         if event == sg.WIN_CLOSED or event == "-ISEITI-ATNAUJINTI-":
             break
         if event == "-ATNAUJINTI-":
-            atnaujinti_duomenis(selected_data, values)
+            atnaujinti_duomenis(selected_data, values, window_atnaujinti)
             window['-TABLE-ZUVIS-'].update(values=ikelti_zuvis(window))
-            window_atnaujinti.close()
     window_atnaujinti.close()
 
-def atnaujinti_duomenis(selected_data, values):
-    svoris = values['-SVORIS-']
-    ilgis = values['-ILGIS-']
-    kada_pagauta_str = values['-PAGAVIMO-DATA-']
-    rusis_pavadinimas = values['-RUSIS-']
-    vietove_pavadinimas = values['-VIETOVE-']
-    try:
-        kada_pagauta = datetime.strptime(kada_pagauta_str, '%Y-%m-%d').date()
-    except ValueError:
-        sg.popup('Neteisingas datos formatas. Turi būti YYYY-MM-DD...', title='')
-        return
-    zuvis = selected_data[0]
-    zuvis.svoris = svoris
-    zuvis.ilgis = ilgis
-    zuvis.kada_pagauta = kada_pagauta
-    zuvis.rusis = rusis_pavadinimas
-    zuvis.vietove = vietove_pavadinimas
-    session.commit()
+def atnaujinti_duomenis(selected_data, values, window_atnaujinti):
+    while True:
+        svoris_str = values['-SVORIS-']
+        ilgis_str = values['-ILGIS-']
+        kada_pagauta_str = values['-PAGAVIMO-DATA-']
+        rusis_pavadinimas = values['-RUSIS-']
+        vietove_pavadinimas = values['-VIETOVE-']
+        svoris_valid = True
+        ilgis_valid = True
+        if not svoris_str or not ilgis_str or not kada_pagauta_str:
+            sg.popup('Visi laukai turi būti užpildyti...', title='', icon=r"icon.ico")
+            return
+        try:
+            svoris = float(svoris_str)
+        except ValueError:
+            svoris_valid = False
+        try:
+            ilgis = float(ilgis_str)
+        except ValueError:
+            ilgis_valid = False
+        if not svoris_valid and not ilgis_valid:
+            sg.popup('Svoris ir ilgis turi būti skaičiai...', title='', icon=r"icon.ico")
+            return
+        elif not svoris_valid:
+            sg.popup('Svoris turi būti skaičius...', title='', icon=r"icon.ico")
+            return
+        elif not ilgis_valid:
+            sg.popup('Ilgis turi būti skaičius...', title='', icon=r"icon.ico")
+            return
+        else:
+            try:
+                kada_pagauta = datetime.strptime(kada_pagauta_str, '%Y-%m-%d').date()
+            except ValueError:
+                sg.popup('Neteisingas datos formatas. Turi būti YYYY-MM-DD...', title='', icon=r"icon.ico")
+                return
+            else:
+                zuvis = selected_data[0]
+                zuvis.svoris = svoris
+                zuvis.ilgis = ilgis
+                zuvis.kada_pagauta = kada_pagauta
+                zuvis.rusis = rusis_pavadinimas
+                zuvis.vietove = vietove_pavadinimas
+                session.commit()
+                window_atnaujinti.close()
+                break
 ##############################################################################
 
 
 ##############################################################################
 def prideti_rusi():
     while True:
-        rusis_pavadinimas = sg.popup_get_text("Įveskite rūšį, kurią norite pridėti: ",)
+        rusis_pavadinimas = sg.popup_get_text("Įveskite rūšį, kurią norite pridėti: ", ' ', size=26, icon=r"icon.ico")
         if rusis_pavadinimas is None:
             break
         if rusis_pavadinimas:
             yra_rusis = session.query(Rusis).filter_by(pavadinimas=rusis_pavadinimas).first()
             if yra_rusis:
-                sg.popup(f"Rūšis '{rusis_pavadinimas}' jau egzistuoja. Bandykite pridėti kitą rūšį...")
+                sg.popup(f"Rūšis '{rusis_pavadinimas}' jau egzistuoja. Bandykite pridėti kitą rūšį...", title='', icon=r"icon.ico")
             else:
                 nauja_rusis = Rusis(pavadinimas=rusis_pavadinimas)
                 session.add(nauja_rusis)
                 session.commit()
-                sg.popup(f"Rūšis '{rusis_pavadinimas}' sėkmingai pridėta...")
+                sg.popup(f"Rūšis '{rusis_pavadinimas}' sėkmingai pridėta...", title='', icon=r"icon.ico")
                 break
         else:
-            sg.popup("Laukelis privalo būti užpildytas...")
+            sg.popup("Laukelis privalo būti užpildytas...", title='', icon=r"icon.ico")
 ##############################################################################
 
 
 ##############################################################################
 def istrinti_rusi_layout():
     layout = [
-        [sg.Listbox(values=ikelti_rusis(), key='-ISTRINTI-RUSI-', size=(8, 5), select_mode='extended')],
-        [sg.Button('Ištrinti'), sg.Button('Išeiti')],
+        [sg.Listbox(values=ikelti_rusis(), key='-ISTRINTI-RUSI-', size=(15, 7), select_mode='extended')],
+        [sg.Button('Ištrinti'), sg.Text('', size=2), sg.Button('Išeiti')],
     ]
-    window_istrinti = sg.Window('', layout)
+    window_istrinti = sg.Window('', layout, finalize=True)
+    window_istrinti.set_icon(r"icon.ico")
     while True:
         event, values = window_istrinti.read()
         if event == sg.WIN_CLOSED or event == "Išeiti":
@@ -91,10 +121,21 @@ def istrinti_rusi_layout():
 
 def istrinti_rusi(pasirinktos_rusys, window_istrinti):
     if pasirinktos_rusys:
+        deleted_ids = []
         for pasirinkta_rusis in pasirinktos_rusys:
-            session.delete(pasirinkta_rusis)
-            session.commit()
-            sg.popup(f"Žuvies rūšis '{pasirinkta_rusis}' sėkmingai ištrinta...")
+            patvirtinimas = sg.popup_yes_no(f'Ar tikrai norite ištrinti rūšį "{pasirinkta_rusis}"?', title='', icon=r"icon.ico")
+            if patvirtinimas == 'Yes':
+                session.delete(pasirinkta_rusis)
+                deleted_ids.append(pasirinkta_rusis)
+            if patvirtinimas == 'No':
+                pass
+        session.commit()
+        if len(deleted_ids) == 1:
+            sg.popup(f'Rūšis "{deleted_ids[0]}" sėkmingai ištrinta...', title='', icon=r"icon.ico")
+        elif len(deleted_ids) > 1:
+            sg.popup(f'Rūšys "{", ".join(map(str, deleted_ids))}" sėkmingai ištrintos...', title='', icon=r"icon.ico")
+        elif len(deleted_ids) == 0:
+            pass
     window_istrinti['-ISTRINTI-RUSI-'].update(values=ikelti_rusis())
     window['-RUSIS-'].update(values=ikelti_rusis())
 
@@ -107,11 +148,12 @@ def ikelti_rusis():
 ##############################################################################
 def prideti_vietove_layout():
     layout = [
-        [sg.Text("Pavadinimas: "), sg.InputText(key='-VIETOVE-')],
-        [sg.Text("Telkinys: "), sg.Combo(values=['ežeras', 'tvenkinys', 'upė', 'jūra'], key='-TIPAS-')],
-        [sg.Button("Pridėti"), sg.Button("Išeiti")]
+        [sg.Text("Pavadinimas:", size=10), sg.InputText(key='-VIETOVE-', size=20)],
+        [sg.Text("Telkinys:", size=10), sg.Combo(values=['ežeras', 'tvenkinys', 'upė', 'jūra'], key='-TIPAS-', size=18, readonly=True)],
+        [sg.Button("Pridėti"), sg.Text('', size=17), sg.Button("Išeiti")]
     ]
-    window_vietove = sg.Window('', layout)
+    window_vietove = sg.Window('', layout, finalize=True)
+    window_vietove.set_icon(r"icon.ico")
     while True:
         event, values = window_vietove.read()
         if event == sg.WIN_CLOSED or event == "Išeiti":
@@ -124,16 +166,16 @@ def prideti_vietove(values, window_vietove):
     pavadinimas = values['-VIETOVE-']
     tipas = values['-TIPAS-']
     if not pavadinimas.strip() and not tipas.strip():
-        sg.popup('Vietovės pavadinimas ir tipas turi būti užpildyti...', title='')
+        sg.popup('Vietovės pavadinimas ir tipas turi būti užpildyti...', title='', icon=r"icon.ico")
     elif not tipas.strip():
-        sg.popup('Vietovės tipas turi būti pasirinktas...', title='')
+        sg.popup('Vietovės tipas turi būti pasirinktas...', title='', icon=r"icon.ico")
     elif not pavadinimas.strip():
-        sg.popup('Vietovės pavadinimas turi būti užpildyti...', title='')
+        sg.popup('Vietovės pavadinimas turi būti užpildyti...', title='', icon=r"icon.ico")
     else:
         nauja_vietove = Vietove(pavadinimas=pavadinimas, tipas=tipas)
         session.add(nauja_vietove)
         session.commit()
-        sg.popup(f"Vietovė '{nauja_vietove.pavadinimas}, {nauja_vietove.tipas}' sėkmingai pridėta...")
+        sg.popup(f"Vietovė '{nauja_vietove.pavadinimas}, {nauja_vietove.tipas}' sėkmingai pridėta...", title='', icon=r"icon.ico")
         window_vietove.close()
 
 def ikelti_vietoves():
@@ -144,10 +186,11 @@ def ikelti_vietoves():
 
 ##############################################################################
 def istrinti_vietove_layout():
-    layout = [[sg.Listbox(values=ikelti_vietoves(), size=(15, 10), key='-ISTRINTI-VIETOVE-', select_mode='extended')],
-              [sg.Button('Ištrinti'), sg.Button('Išeiti')],
+    layout = [[sg.Listbox(values=ikelti_vietoves(), size=(15, 7), key='-ISTRINTI-VIETOVE-', select_mode='extended')],
+              [sg.Button('Ištrinti'), sg.Text('', size=2), sg.Button('Išeiti')],
     ]
-    window_istrinti_vietove = sg.Window('', layout)
+    window_istrinti_vietove = sg.Window('', layout, finalize=True)
+    window_istrinti_vietove.set_icon(r"icon.ico")
     while True:
         event, values = window_istrinti_vietove.read()
         if event == sg.WIN_CLOSED or event == 'Išeiti':
@@ -159,10 +202,21 @@ def istrinti_vietove_layout():
 
 def istrinti_vietove(pasirinktos_vietoves, window_istrinti_vietove):
     if pasirinktos_vietoves:
+        deleted_ids = []
         for pasirinkta_vietove in pasirinktos_vietoves:
-            session.delete(pasirinkta_vietove)
-            sg.popup(f"Vietovė '{pasirinkta_vietove}' sėkmingai ištrinta...")
+            patvirtinimas = sg.popup_yes_no(f'Ar tikrai norite ištrinti vietovę "{pasirinkta_vietove}"?', title='', icon=r"icon.ico")
+            if patvirtinimas == 'Yes':
+                session.delete(pasirinkta_vietove)
+                deleted_ids.append(pasirinkta_vietove)
+            if patvirtinimas == 'No':
+                pass
         session.commit()
+        if len(deleted_ids) == 1:
+            sg.popup(f'Vietovė "{deleted_ids[0]}" sėkmingai ištrinta...', title='', icon=r"icon.ico")
+        elif len(deleted_ids) > 1:
+            sg.popup(f'Vietovės "{" | ".join(map(str, deleted_ids))}" sėkmingai ištrintos...', title='', icon=r"icon.ico")
+        elif len(deleted_ids) == 0:
+            pass        
     window['-VIETOVE-'].update(values=ikelti_vietoves())
     window_istrinti_vietove['-ISTRINTI-VIETOVE-'].update(values=ikelti_vietoves())
 ##############################################################################
@@ -175,36 +229,49 @@ def ikelti_zuvis(window):
     window['-TABLE-ZUVIS-'].update(values=data)
 
 def prideti_zuvi(values):
-    svoris = values['-SVORIS-']
-    ilgis = values['-ILGIS-']
+    svoris_str = values['-SVORIS-']
+    ilgis_str = values['-ILGIS-']
     kada_pagauta = values['-KADA_PAGAUTA-']
     rusis = values['-RUSIS-']
     vietove = values['-VIETOVE-']
-    if not svoris.isdigit():
-        sg.popup('Svoris turi būti skaičius...', title='')
+    svoris_valid = True
+    ilgis_valid = True
+    if not svoris_str or not ilgis_str or not kada_pagauta or not rusis or not vietove:
+        sg.popup('Visi laukai turi būti užpildyti...', title='', icon=r"icon.ico")
         return
-    if not ilgis.isdigit():
-        sg.popup('Ilgis turi būti skaičius...', title='')
+    try:
+        svoris = float(svoris_str)
+    except ValueError:
+        svoris_valid = False
+    try:
+        ilgis = float(ilgis_str)
+    except ValueError:
+        ilgis_valid = False
+    if not svoris_valid and not ilgis_valid:
+        sg.popup('Svoris ir ilgis turi būti skaičiai...', title='', icon=r"icon.ico")
         return
-    if not svoris or not ilgis or not kada_pagauta or not rusis or not vietove:
-        sg.popup('Visi laukai turi būti užpildyti...', title='')
+    elif not svoris_valid:
+        sg.popup('Svoris turi būti skaičius...', title='', icon=r"icon.ico")
+        return
+    elif not ilgis_valid:
+        sg.popup('Ilgis turi būti skaičius...', title='', icon=r"icon.ico")
+        return
+    try:
+        kada_pagauta = datetime.strptime(kada_pagauta, '%Y-%m-%d').date()
+        nauja_zuvis = Zuvis(svoris=svoris, ilgis=ilgis, kada_pagauta=kada_pagauta, rusis=rusis, vietove=vietove)
+    except ValueError:
+        sg.popup('Neteisingas datos formatas. Turi būti YYYY-MM-DD...', title='', icon=r"icon.ico")
     else:
-        try:
-            kada_pagauta = datetime.strptime(kada_pagauta, '%Y-%m-%d').date()
-            nauja_zuvis = Zuvis(svoris=svoris, ilgis=ilgis, kada_pagauta=kada_pagauta, rusis=rusis, vietove=vietove)
-        except ValueError:
-            sg.popup('Neteisingas datos formatas. Turi būti YYYY-MM-DD...', title='')
-        else:
-            session.add(nauja_zuvis)
-            session.commit()
-            sg.popup("Žuvis sėkmingai pridėta...")
+        session.add(nauja_zuvis)
+        session.commit()
+        sg.popup("Žuvis sėkmingai pridėta...", title='', icon=r"icon.ico")
 
 def istrinti_zuvi(selected_data):
     if selected_data:
         deleted_ids = []
         for zuvis in selected_data:
             zuvis_id = zuvis.id
-            patvirtinimas = sg.popup_yes_no(f'Ar tikrai norite ištrinti žuvį "ID {zuvis_id}"?', title='')
+            patvirtinimas = sg.popup_yes_no(f'Ar tikrai norite ištrinti žuvį "ID {zuvis_id}"?', title='', icon=r"icon.ico")
             if patvirtinimas == 'Yes':
                 session.delete(zuvis)
                 deleted_ids.append(zuvis_id)
@@ -213,9 +280,9 @@ def istrinti_zuvi(selected_data):
         session.commit()
         ikelti_zuvis(window)
         if len(deleted_ids) == 1:
-            sg.popup(f'Žuvis "ID {deleted_ids[0]}" sėkmingai ištrinta...', title='')
+            sg.popup(f'Žuvis "ID {deleted_ids[0]}" sėkmingai ištrinta...', title='', icon=r"icon.ico")
         elif len(deleted_ids) > 1:
-            sg.popup(f'Žuvys "ID {", ".join(map(str, deleted_ids))}" sėkmingai ištrintos...', title='')
+            sg.popup(f'Žuvys "ID {", ".join(map(str, deleted_ids))}" sėkmingai ištrintos...', title='', icon=r"icon.ico")
         elif len(deleted_ids) == 0:
             pass
 ##############################################################################
@@ -225,25 +292,26 @@ def istrinti_zuvi(selected_data):
 layout = [
     [sg.TabGroup([
         [sg.Tab('Pridėti', [
-            [sg.Text("Svoris:"), sg.InputText(key='-SVORIS-')],
-            [sg.Text("Ilgis:"), sg.InputText(key='-ILGIS-')],
-            [sg.Text("Pagavimo data:"), sg.InputText(key='-KADA_PAGAUTA-')],
-            [sg.Text("Rūšis:"), sg.Combo(values=ikelti_rusis(), enable_events=True, key='-RUSIS-', size=(8, 10), readonly=True), sg.Button("Pridėti rūšį"), sg.Button("Ištrinti rūšį")],
-            [sg.Text("Vietovė:"), sg.Combo(values=ikelti_vietoves(), enable_events=True, key='-VIETOVE-', size=(15, 10), readonly=True), sg.Button("Pridėti vietovę"), sg.Button("Ištrinti vietovę")],
-            [sg.Button("Pridėti"), sg.Button("Išeiti")]
+            [sg.Text("Svoris: (kg)", justification='left', size=11), sg.InputText(key='-SVORIS-', size=(17, 1))],
+            [sg.Text("Ilgis: (cm)", justification='left', size=11), sg.InputText(key='-ILGIS-', size=(17, 1))],
+            [sg.Text("Pagavimo data:", justification='left', size=11), sg.InputText(key='-KADA_PAGAUTA-', size=(17, 1))],
+            [sg.Text("Rūšis:", justification='left', size=11), sg.Combo(values=ikelti_rusis(), enable_events=True, key='-RUSIS-', size=(15, 10), readonly=True), sg.Button("Pridėti rūšį", size=(10, 1)), sg.Button("Ištrinti rūšį", size=(10, 1))],
+            [sg.Text("Vietovė:", justification='left', size=11), sg.Combo(values=ikelti_vietoves(), enable_events=True, key='-VIETOVE-', size=(15, 10), readonly=True), sg.Button("Pridėti vietovę", size=(10, 1)), sg.Button("Ištrinti vietovę", size=(10, 1))],
+            [sg.Button("Pridėti")],
+            [sg.Text('', size=80), sg.Button("Išeiti")]
         ])],
         [sg.Tab('Peržiūrėti žuvis', [
-            [sg.Table(values=[], headings=['ID', 'SVORIS', 'ILGIS', 'RŪŠIS', 'VIETOVĖ', 'PAGAVIMO DATA'], 
+            [sg.Table(values=[], headings=['ID', 'SVORIS (kg)', 'ILGIS (cm)', 'RŪŠIS', 'VIETOVĖ', 'PAGAVIMO DATA'], 
                       col_widths=[4, 14, 14, 14, 14, 14], justification='center', auto_size_columns=False,
                         key='-TABLE-ZUVIS-', select_mode='extended', enable_events=True)],
-            [sg.Button("Ištrinti", disabled=True), sg.Button("Atnaujinti duomenis", disabled=True), sg.Button("Išeiti", key='-ISEITI-')]
+            [sg.Button("Ištrinti", disabled=True), sg.Button("Atnaujinti duomenis", disabled=True), sg.Text('', size=55), sg.Button("Išeiti", key='-ISEITI-')]
         ])]
     ])]
 ]
 
 
-
-window = sg.Window("Fisher Friend Programa", layout, finalize=True)
+window = sg.Window("Fisher Friend", layout, finalize=True)
+window.set_icon(r"icon.ico")
 ikelti_zuvis(window)
 while True:
     event, values = window.read()
