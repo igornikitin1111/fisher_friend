@@ -18,7 +18,7 @@ root = tk.Tk()
 root.title("Fisher Friend")
 
 root.geometry("1000x666")
-
+root.iconbitmap('icon.ico')
 image_filename = 'bg.png'
 bg_image = Image.open(image_filename)
 bg_photo = ImageTk.PhotoImage(bg_image)
@@ -31,9 +31,7 @@ frame.place(relx=0.5, rely=0.5, anchor='center')
 progress_bar = ttk.Progressbar(frame, orient='horizontal', length=300, mode='determinate')
 progress_bar.pack(pady=20)
 
-start_button = tk.Button(frame, text="Paleisti Fisher Friend programą", command=simulate_loading)
+start_button = tk.Button(frame, text="Paleisti 'Fisher Friend' programą", command=simulate_loading)
 start_button.pack()
 
 root.mainloop()
-
-#subprocess.Popen(['python', 'main.py'])
