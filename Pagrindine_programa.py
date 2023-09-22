@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 import time
-import subprocess
+from main import session, main
 
 def simulate_loading():
     progress_bar['maximum'] = 100
@@ -12,6 +12,7 @@ def simulate_loading():
         root.update_idletasks()
     
     root.destroy()
+    main(session)
 
 root = tk.Tk()
 root.title("Fisher Friend")
@@ -35,4 +36,4 @@ start_button.pack()
 
 root.mainloop()
 
-subprocess.Popen(['python', 'main.py'])
+#subprocess.Popen(['python', 'main.py'])

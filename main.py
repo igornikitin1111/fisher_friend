@@ -309,45 +309,45 @@ layout = [
     ])]
 ]
 
-
-window = sg.Window("Fisher Friend", layout, finalize=True)
-window.set_icon(r"icon.ico")
-ikelti_zuvis(window)
-while True:
-    event, values = window.read()
-    if values is not None:
-        selected_row_indexes = values['-TABLE-ZUVIS-']
-        if selected_row_indexes:
-            zuvys = session.query(Zuvis).all()
-            selected_data = [zuvys[i] for i in selected_row_indexes]
+def main(session=session):
+    window = sg.Window("Fisher Friend", layout, finalize=True)
+    window.set_icon(r"icon.ico")
+    ikelti_zuvis(window)
+    while True:
+        event, values = window.read()
+        if values is not None:
+            selected_row_indexes = values['-TABLE-ZUVIS-']
+            if selected_row_indexes:
+                zuvys = session.query(Zuvis).all()
+                selected_data = [zuvys[i] for i in selected_row_indexes]
+            else:
+                selected_data = None
+        ikelti_rusis()
+        ikelti_vietoves()
+        if event == sg.WIN_CLOSED or event == 'Išeiti' or event == '-ISEITI-':
+            break
+        if event == "Pridėti rūšį":
+            prideti_rusi()
+            window['-RUSIS-'].update(values=ikelti_rusis())
+        elif event == "Ištrinti rūšį":
+            istrinti_rusi_layout()
+            window['-RUSIS-'].update(values=ikelti_rusis())
+        elif event == "Ištrinti vietovę":
+            istrinti_vietove_layout()
+        elif event == "Pridėti vietovę":
+            prideti_vietove_layout()
+            window['-VIETOVE-'].update(values=ikelti_vietoves())
+        elif event == "Pridėti":
+            prideti_zuvi(values)
+            ikelti_zuvis(window)
+        elif event == "Atnaujinti duomenis":
+            atnaujinti_duomenis_layout(selected_data, window)
+        elif event == "Ištrinti":
+            istrinti_zuvi(selected_data)
+        if selected_data:
+            window['Ištrinti'].update(disabled=False)
+            window['Atnaujinti duomenis'].update(disabled=False)
         else:
-            selected_data = None
-    ikelti_rusis()
-    ikelti_vietoves()
-    if event == sg.WIN_CLOSED or event == 'Išeiti' or event == '-ISEITI-':
-        break
-    if event == "Pridėti rūšį":
-        prideti_rusi()
-        window['-RUSIS-'].update(values=ikelti_rusis())
-    elif event == "Ištrinti rūšį":
-        istrinti_rusi_layout()
-        window['-RUSIS-'].update(values=ikelti_rusis())
-    elif event == "Ištrinti vietovę":
-        istrinti_vietove_layout()
-    elif event == "Pridėti vietovę":
-        prideti_vietove_layout()
-        window['-VIETOVE-'].update(values=ikelti_vietoves())
-    elif event == "Pridėti":
-        prideti_zuvi(values)
-        ikelti_zuvis(window)
-    elif event == "Atnaujinti duomenis":
-        atnaujinti_duomenis_layout(selected_data, window)
-    elif event == "Ištrinti":
-        istrinti_zuvi(selected_data)
-    if selected_data:
-        window['Ištrinti'].update(disabled=False)
-        window['Atnaujinti duomenis'].update(disabled=False)
-    else:
-        window['Ištrinti'].update(disabled=True)
-        window['Atnaujinti duomenis'].update(disabled=True)
-window.close()
+            window['Ištrinti'].update(disabled=True)
+            window['Atnaujinti duomenis'].update(disabled=True)
+    window.close()
