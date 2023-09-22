@@ -4,12 +4,12 @@ from sqlalchemy.orm import sessionmaker
 from backend import Base, Zuvis, Rusis, Vietove
 from datetime import datetime
 
+
 db_engine = create_engine('sqlite:///fisher_friend_database.db')
 
 Session = sessionmaker(db_engine)
 session = Session()
 
-##############################################################################
 def atnaujinti_duomenis_layout(selected_data, window):
     zuvis = selected_data[0]
     layout = [
@@ -49,10 +49,10 @@ def atnaujinti_duomenis(selected_data, values):
     zuvis.rusis = rusis_pavadinimas
     zuvis.vietove = vietove_pavadinimas
     session.commit()
-##############################################################################
 
 
-##############################################################################
+
+
 def prideti_rusi():
     while True:
         rusis_pavadinimas = sg.popup_get_text("Įveskite rūšį, kurią norite pridėti: ",)
@@ -70,10 +70,7 @@ def prideti_rusi():
                 break
         else:
             sg.popup("Laukelis privalo būti užpildytas...")
-##############################################################################
 
-
-##############################################################################
 def istrinti_rusi_layout():
     layout = [
         [sg.Listbox(values=ikelti_rusis(), key='-ISTRINTI-RUSI-', size=(8, 5), select_mode='extended')],
@@ -98,13 +95,17 @@ def istrinti_rusi(pasirinktos_rusys, window_istrinti):
     window_istrinti['-ISTRINTI-RUSI-'].update(values=ikelti_rusis())
     window['-RUSIS-'].update(values=ikelti_rusis())
 
+
 def ikelti_rusis():
     rusys = session.query(Rusis).all()
     return rusys
-##############################################################################
+
+def ikelti_zuvis(window):
+    zuvys = session.query(Zuvis).all()
+    data = [(zuvis.id, zuvis.svoris, zuvis.ilgis, zuvis.rusis.pavadinimas, zuvis.vietove, zuvis.kada_pagauta) for zuvis in zuvys]
+    window['-TABLE-ZUVIS-'].update(values=data)
 
 
-##############################################################################
 def prideti_vietove_layout():
     layout = [
         [sg.Text("Pavadinimas: "), sg.InputText(key='-VIETOVE-')],
@@ -136,13 +137,11 @@ def prideti_vietove(values, window_vietove):
         sg.popup(f"Vietovė '{nauja_vietove.pavadinimas}, {nauja_vietove.tipas}' sėkmingai pridėta...")
         window_vietove.close()
 
+
 def ikelti_vietoves():
     vietoves = session.query(Vietove).all()
     return vietoves
-##############################################################################
 
-
-##############################################################################
 def istrinti_vietove_layout():
     layout = [[sg.Listbox(values=ikelti_vietoves(), size=(15, 10), key='-ISTRINTI-VIETOVE-', select_mode='extended')],
               [sg.Button('Ištrinti'), sg.Button('Išeiti')],
@@ -165,14 +164,27 @@ def istrinti_vietove(pasirinktos_vietoves, window_istrinti_vietove):
         session.commit()
     window['-VIETOVE-'].update(values=ikelti_vietoves())
     window_istrinti_vietove['-ISTRINTI-VIETOVE-'].update(values=ikelti_vietoves())
-##############################################################################
 
 
-##############################################################################
-def ikelti_zuvis(window):
-    zuvys = session.query(Zuvis).all()
-    data = [(zuvis.id, zuvis.svoris, zuvis.ilgis, zuvis.rusis.pavadinimas, zuvis.vietove, zuvis.kada_pagauta) for zuvis in zuvys]
-    window['-TABLE-ZUVIS-'].update(values=data)
+
+layout = [
+    [sg.TabGroup([
+        [sg.Tab('Pridėti', [
+            [sg.Text("Svoris:"), sg.InputText(key='-SVORIS-')],
+            [sg.Text("Ilgis:"), sg.InputText(key='-ILGIS-')],
+            [sg.Text("Pagavimo data:"), sg.InputText(key='-KADA_PAGAUTA-')],
+            [sg.Text("Rūšis:"), sg.Combo(values=ikelti_rusis(), enable_events=True, key='-RUSIS-', size=(8, 10), readonly=True), sg.Button("Pridėti rūšį"), sg.Button("Ištrinti rūšį")],
+            [sg.Text("Vietovė:"), sg.Combo(values=ikelti_vietoves(), enable_events=True, key='-VIETOVE-', size=(15, 10), readonly=True), sg.Button("Pridėti vietovę"), sg.Button("Ištrinti vietovę")],
+            [sg.Button("Pridėti"), sg.Button("Išeiti")]
+        ])],
+        [sg.Tab('Peržiūrėti žuvis', [
+            [sg.Table(values=[], headings=['ID', 'SVORIS', 'ILGIS', 'RŪŠIS', 'VIETOVĖ', 'PAGAVIMO DATA'], 
+                      col_widths=[4, 14, 14, 14, 14, 14], justification='center', auto_size_columns=False,
+                        key='-TABLE-ZUVIS-', select_mode='extended', enable_events=True)],
+            [sg.Button("Ištrinti", disabled=True), sg.Button("Atnaujinti duomenis", disabled=True), sg.Button("Išeiti", key='-ISEITI-')]
+        ])]
+    ])]
+]
 
 def prideti_zuvi(values):
     svoris = values['-SVORIS-']
@@ -199,6 +211,7 @@ def prideti_zuvi(values):
             session.commit()
             sg.popup("Žuvis sėkmingai pridėta...")
 
+
 def istrinti_zuvi(selected_data):
     if selected_data:
         deleted_ids = []
@@ -218,29 +231,6 @@ def istrinti_zuvi(selected_data):
             sg.popup(f'Žuvys "ID {", ".join(map(str, deleted_ids))}" sėkmingai ištrintos...', title='')
         elif len(deleted_ids) == 0:
             pass
-##############################################################################
-
-
-
-layout = [
-    [sg.TabGroup([
-        [sg.Tab('Pridėti', [
-            [sg.Text("Svoris:"), sg.InputText(key='-SVORIS-')],
-            [sg.Text("Ilgis:"), sg.InputText(key='-ILGIS-')],
-            [sg.Text("Pagavimo data:"), sg.InputText(key='-KADA_PAGAUTA-')],
-            [sg.Text("Rūšis:"), sg.Combo(values=ikelti_rusis(), enable_events=True, key='-RUSIS-', size=(8, 10), readonly=True), sg.Button("Pridėti rūšį"), sg.Button("Ištrinti rūšį")],
-            [sg.Text("Vietovė:"), sg.Combo(values=ikelti_vietoves(), enable_events=True, key='-VIETOVE-', size=(15, 10), readonly=True), sg.Button("Pridėti vietovę"), sg.Button("Ištrinti vietovę")],
-            [sg.Button("Pridėti"), sg.Button("Išeiti")]
-        ])],
-        [sg.Tab('Peržiūrėti žuvis', [
-            [sg.Table(values=[], headings=['ID', 'SVORIS', 'ILGIS', 'RŪŠIS', 'VIETOVĖ', 'PAGAVIMO DATA'], 
-                      col_widths=[4, 14, 14, 14, 14, 14], justification='center', auto_size_columns=False,
-                        key='-TABLE-ZUVIS-', select_mode='extended', enable_events=True)],
-            [sg.Button("Ištrinti", disabled=True), sg.Button("Atnaujinti duomenis", disabled=True), sg.Button("Išeiti", key='-ISEITI-')]
-        ])]
-    ])]
-]
-
 
 
 window = sg.Window("Fisher Friend Programa", layout, finalize=True)
