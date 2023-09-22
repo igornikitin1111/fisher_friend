@@ -288,7 +288,6 @@ def istrinti_zuvi(selected_data):
 ##############################################################################
 
 
-
 layout = [
     [sg.TabGroup([
         [sg.Tab('Pridėti', [
@@ -308,6 +307,7 @@ layout = [
         ])]
     ])]
 ]
+
 
 def main(session=session):
     window = sg.Window("Fisher Friend", layout, finalize=True)
