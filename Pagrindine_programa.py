@@ -35,4 +35,4 @@ start_button.pack()
 
 root.mainloop()
 
-subprocess.Popen(['python', 'fisher_friend/main.py'])
+subprocess.Popen(['python', 'main.py'])
