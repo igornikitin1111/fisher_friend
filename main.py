@@ -41,35 +41,31 @@ def atnaujinti_duomenis(selected_data, values, window_atnaujinti):
         kada_pagauta_str = values['-PAGAVIMO-DATA-']
         rusis_pavadinimas = values['-RUSIS-']
         vietove_pavadinimas = values['-VIETOVE-']
-        svoris_valid = True
-        ilgis_valid = True
+        klaidos = []
         if not svoris_str or not ilgis_str or not kada_pagauta_str:
-            sg.popup('Visi laukai turi būti užpildyti...', title='', icon=r"icon.ico")
-            return
-        try:
-            svoris = float(svoris_str)
-        except ValueError:
-            svoris_valid = False
-        try:
-            ilgis = float(ilgis_str)
-        except ValueError:
-            ilgis_valid = False
-        if not svoris_valid and not ilgis_valid:
-            sg.popup('Svoris ir ilgis turi būti skaičiai...', title='', icon=r"icon.ico")
-            return
-        elif not svoris_valid:
-            sg.popup('Svoris turi būti skaičius...', title='', icon=r"icon.ico")
-            return
-        elif not ilgis_valid:
-            sg.popup('Ilgis turi būti skaičius...', title='', icon=r"icon.ico")
+            klaidos.append('Užpildykite visus laukelius...')
+            sg.popup('\n'.join(klaidos), title='', icon=r"icon.ico")
             return
         else:
+            svoris_valid = True
+            ilgis_valid = True
+            data_valid = True
+            try:
+                svoris = float(svoris_str)
+            except ValueError:
+                svoris_valid = False
+                klaidos.append('Svoris turi būti skaičius...')
+            try:
+                ilgis = float(ilgis_str)
+            except ValueError:
+                ilgis_valid = False
+                klaidos.append('Ilgis turi būti skaičius...')
             try:
                 kada_pagauta = datetime.strptime(kada_pagauta_str, '%Y-%m-%d').date()
             except ValueError:
-                sg.popup('Neteisingas datos formatas. Turi būti YYYY-MM-DD...', title='', icon=r"icon.ico")
-                return
-            else:
+                data_valid = False
+                klaidos.append('Neteisingas datos formatas. Data turi būti YYYY-MM-DD...')
+            if svoris_valid and ilgis_valid and data_valid:
                 zuvis = selected_data[0]
                 zuvis.svoris = svoris
                 zuvis.ilgis = ilgis
@@ -79,6 +75,9 @@ def atnaujinti_duomenis(selected_data, values, window_atnaujinti):
                 session.commit()
                 window_atnaujinti.close()
                 break
+            else:
+                sg.popup('\n'.join(klaidos), title='', icon=r"icon.ico")
+                return
 ##############################################################################
 
 
@@ -276,37 +275,36 @@ def prideti_zuvi(values):
     kada_pagauta = values['-KADA_PAGAUTA-']
     rusis = values['-RUSIS-']
     vietove = values['-VIETOVE-']
-    svoris_valid = True
-    ilgis_valid = True
+    klaidos = []
     if not svoris_str or not ilgis_str or not kada_pagauta or not rusis or not vietove:
-        sg.popup('Visi laukai turi būti užpildyti...', title='', icon=r"icon.ico")
-        return
-    try:
-        svoris = float(svoris_str)
-    except ValueError:
-        svoris_valid = False
-    try:
-        ilgis = float(ilgis_str)
-    except ValueError:
-        ilgis_valid = False
-    if not svoris_valid and not ilgis_valid:
-        sg.popup('Svoris ir ilgis turi būti skaičiai...', title='', icon=r"icon.ico")
-        return
-    elif not svoris_valid:
-        sg.popup('Svoris turi būti skaičius...', title='', icon=r"icon.ico")
-        return
-    elif not ilgis_valid:
-        sg.popup('Ilgis turi būti skaičius...', title='', icon=r"icon.ico")
-        return
-    try:
-        kada_pagauta = datetime.strptime(kada_pagauta, '%Y-%m-%d').date()
-        nauja_zuvis = Zuvis(svoris=svoris, ilgis=ilgis, kada_pagauta=kada_pagauta, rusis=rusis, vietove=vietove)
-    except ValueError:
-        sg.popup('Neteisingas datos formatas. Turi būti YYYY-MM-DD...', title='', icon=r"icon.ico")
+        klaidos.append('Užpildykite visus laukelius...')
+        sg.popup('\n'.join(klaidos), title='', icon=r"icon.ico")
     else:
-        session.add(nauja_zuvis)
-        session.commit()
-        sg.popup("Žuvis sėkmingai pridėta...", title='', icon=r"icon.ico")
+        svoris_valid = True
+        ilgis_valid = True
+        data_valid = True
+        try:
+            svoris = float(svoris_str)
+        except ValueError:
+            svoris_valid = False
+            klaidos.append('Svoris turi būti skaičius...')
+        try:
+            ilgis = float(ilgis_str)
+        except ValueError:
+            ilgis_valid = False
+            klaidos.append('Ilgis turi būti skaičius...')
+        try:
+            kada_pagauta = datetime.strptime(kada_pagauta, '%Y-%m-%d').date()
+        except ValueError:
+            data_valid = False
+            klaidos.append('Neteisingas datos formatas. Data turi būti YYYY-MM-DD...')
+        if svoris_valid and ilgis_valid and data_valid:
+            nauja_zuvis = Zuvis(svoris=svoris, ilgis=ilgis, kada_pagauta=kada_pagauta, rusis=rusis, vietove=vietove)
+            session.add(nauja_zuvis)
+            session.commit()
+            sg.popup("Žuvis sėkmingai pridėta...", title='', icon=r"icon.ico")
+        else:
+            sg.popup('\n'.join(klaidos), title='', icon=r"icon.ico")
 
 def istrinti_zuvi(selected_data):
     if selected_data:
