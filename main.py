@@ -232,6 +232,11 @@ def istrinti_vietove(pasirinktos_vietoves, window_istrinti_vietove, window):
 
 
 ##############################################################################
+def sorted_id(window):
+    zuvys = session.query(Zuvis).order_by(Zuvis.id.desc()).all()
+    data = [(zuvis.id, zuvis.svoris, zuvis.ilgis, zuvis.rusis.pavadinimas, zuvis.vietove, zuvis.kada_pagauta) for zuvis in zuvys]
+    window['-TABLE-ZUVIS-'].update(values=data)
+
 def sorted_svoris(window):
     zuvys = session.query(Zuvis).order_by(Zuvis.svoris).all()
     data = [(zuvis.id, zuvis.svoris, zuvis.ilgis, zuvis.rusis.pavadinimas, zuvis.vietove, zuvis.kada_pagauta) for zuvis in zuvys]
@@ -243,12 +248,12 @@ def sorted_ilgis(window):
     window['-TABLE-ZUVIS-'].update(values=data)
 
 def sorted_rusis(window):
-    zuvys = session.query(Zuvis).order_by(Zuvis.rusis.pavadinimas).all()
+    zuvys = session.query(Zuvis).join(Zuvis.rusis).order_by(Rusis.pavadinimas).all()
     data = [(zuvis.id, zuvis.svoris, zuvis.ilgis, zuvis.rusis.pavadinimas, zuvis.vietove, zuvis.kada_pagauta) for zuvis in zuvys]
     window['-TABLE-ZUVIS-'].update(values=data)
 
 def sorted_vietove(window):
-    zuvys = session.query(Zuvis).order_by(Zuvis.vietove.pavadinimas).all()
+    zuvys = session.query(Zuvis).join(Zuvis.vietove).order_by(Vietove.pavadinimas).all()
     data = [(zuvis.id, zuvis.svoris, zuvis.ilgis, zuvis.rusis.pavadinimas, zuvis.vietove, zuvis.kada_pagauta) for zuvis in zuvys]
     window['-TABLE-ZUVIS-'].update(values=data)
 
@@ -396,7 +401,9 @@ klaustukas = "Įveskite į laukelį informaciją, pagal kurią bus išfiltruota 
             ************************************************************\
             Jei norite sugrąžinti duomenis, tai dar kartą paspauskite 'Filtruoti' mygtuką...\
             ************************************************************\
-                                                   Eksportuojamų duomenų bylos tipas yra 'CSV'..."
+            Filtruoti galite ir pagal stulpelius, paspaudę ant ant lentelės antraščių...\
+            ************************************************************\
+                                                   Eksportuojamų duomenų bylos tipas yra 'CSV'..."         
 
 
 
@@ -408,6 +415,7 @@ def main(session=session):
     paspaudimai_rusis = 0
     paspaudimai_vietove = 0
     paspaudimai_kada_pagauta = 0
+    paspaudimai_id = 0
     window = sg.Window("Fisher Friend", layout, finalize=True)
     window.set_icon(r"icon.ico")
     ikelti_zuvis(window)
@@ -447,7 +455,12 @@ def main(session=session):
         elif event == "Eksportuoti":
            eksportuoti()
         elif event == ('-TABLE-ZUVIS-','+CLICKED+',(-1, 0)):
-            pass
+            paspaudimai_id += 1
+            if paspaudimai_id >= 2:
+                ikelti_zuvis(window)
+                paspaudimai_id = 0
+            else:
+                sorted_id(window)            
         elif event == ('-TABLE-ZUVIS-','+CLICKED+',(-1, 1)):
             paspaudimai_svoris += 1
             if paspaudimai_svoris >= 2:
