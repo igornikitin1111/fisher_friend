@@ -7,7 +7,7 @@ from main import session, main
 def simulate_loading():
     progress_bar['maximum'] = 100
     for i in range(101):
-        time.sleep(0.03)
+        time.sleep(0.01)
         progress_bar['value'] = i
         root.update_idletasks()
     
